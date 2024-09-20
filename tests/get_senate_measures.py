@@ -23,7 +23,7 @@ class Status(Enum):
                 return member.name
         return None
     
-class Measure():
+class Procedure():
     def __init__(self, term, type = None, body = None, num = None) -> None:
         self.term = term
         self.type = type
@@ -66,7 +66,7 @@ class Measure():
         input_element = self.find_by_id('ctl00_CPHBody_Tramites_txt_Medida')
         self.input_text(input_element, measure_number)
         
-    def get_measure_list(self):
+    def get_measures(self):
         title_value = 'Presione para navegar a la Medida...'
         return browser.find_elements(By.XPATH, 
                                      "//table[contains(@class, 'datagrid')]//tr[@title='{}']".format(title_value))
@@ -103,10 +103,10 @@ def next_page():
     
 def get_senate_voted_measures():
     
-    cuatrienio = '2021-2024'
-    tipo_medida = 'Proyecto del Senado'
+    term = '2021-2024'
+    type = 'Proyecto del Senado'
     
-    measure = Measure(cuatrienio, tipo_medida)    
+    measure = Procedure(term, type)    
     measure.submit_form() 
       
     time.sleep(1)
@@ -115,7 +115,7 @@ def get_senate_voted_measures():
     previous_page_number = 1   
     
     while True:
-        measures = measure.get_measure_list()
+        measures = measure.get_measures()
         
         for row in measures:
             # Get status tracker button
@@ -132,7 +132,7 @@ def get_senate_voted_measures():
         else:
             previous_page_number = next_page_number        
         
-    with open(f'{cuatrienio}_Medidas_{tipo_medida}.txt', 'w') as file:
+    with open(f'{term}_Medidas_{type}.txt', 'w') as file:
         for measure_number in voted_measure_numbers:
             file.write(f"{measure_number},\n")
 
@@ -140,10 +140,10 @@ def get_senate_voted_measures():
     browser.quit()
     
 def get_votes_from_measures():
-    cuatrienio = '2021-2024'
-    num_medida = 'PS0283'
+    term = '2021-2024'
+    number = 'PS0283'
     
-    measure = Measure(cuatrienio, num=num_medida)
+    measure = Procedure(term, num=number)
     measure.submit_form()   
     measure.submit_form()   
     

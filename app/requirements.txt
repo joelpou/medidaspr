@@ -1,0 +1,6 @@
+fastapi
+selenium
+pytesseract
+pdf2image
+psycopg2-binary
+uvicorn

@@ -1,0 +1,28 @@
+version: '3.8'
+services:
+  web:
+    build: ./app
+    ports:
+      - "8000:8000"
+    depends_on:
+      - db
+      - selenium
+    environment:
+      DATABASE_URL: postgres://user:password@db:5432/voting
+
+  db:
+    image: postgres:15-alpine
+    volumes:
+      - postgres_data:/var/lib/postgresql/data/
+    ports:
+      - 5432:5432
+    env_file:
+      - db.env
+
+  selenium:
+    image: selenium/standalone-chrome
+    ports:
+      - "4444:4444"
+
+volumes:
+  postgres_data:
