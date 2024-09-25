@@ -4,3 +4,7 @@ pytesseract
 pdf2image
 psycopg2-binary
 uvicorn
+ormar[postgresql]
+eventkit
+pydantic-settings
+

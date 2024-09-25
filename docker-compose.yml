@@ -2,13 +2,16 @@ version: '3.8'
 services:
   web:
     build: ./app
+    volumes:
+      - .:/usr/src
     ports:
-      - "8000:8000"
+      - 8000:8000
+      - 5678:5678
+    env_file:
+      - app.env
     depends_on:
       - db
       - selenium
-    environment:
-      DATABASE_URL: postgres://user:password@db:5432/voting
 
   db:
     image: postgres:15-alpine
