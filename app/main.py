@@ -1,28 +1,31 @@
+from typing import AsyncIterator
 from contextlib import asynccontextmanager
 
-from fastapi import FastAPI, HTTPException
-from psycopg2.extras import RealDictCursor
+from fastapi import FastAPI
 import sqlalchemy
-from db.models import Measure, database, metadata, engine
+
+from db.models import OrmarConfig, engine, base_ormar_config
 from routes import *
 
 
-@asynccontextmanager
-async def lifespan(app: FastAPI):
-    if not database.is_connected:
-        await database.connect()  
+def get_lifespan(config: OrmarConfig):
+    @asynccontextmanager
+    async def lifespan(_: FastAPI) -> AsyncIterator[None]:
+        if not config.database.is_connected:
+            await config.database.connect()  
 
-    tables_exist = sqlalchemy.inspect(engine).has_table(Measure.get_name)
-    if not tables_exist:
-        metadata.create_all(engine)
+        tables_exist = sqlalchemy.inspect(engine).get_table_names()
+        if not tables_exist:
+            config.metadata.create_all(engine)
+            
+        yield
         
-    yield
-    
-    if database.is_connected:
-        await database.disconnect()
+        if config.database.is_connected:
+            await config.database.disconnect()
+            
+    return lifespan
 
-
-app = FastAPI(title='MedidasPR')
+app = FastAPI(title='MedidasPR', lifespan=get_lifespan(base_ormar_config))
 
 app.include_router(legislator_router)
     
