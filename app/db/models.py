@@ -3,7 +3,7 @@ from enum import Enum
 import databases
 import sqlalchemy
 from ormar import Model, OrmarConfig, Integer, String, \
-    DateTime, JSON, UUID, Boolean, ForeignKey
+    Text, DateTime, JSON, UUID, Boolean, ForeignKey
 from .config import settings
 from pydantic import Json
 from typing import Optional
@@ -25,12 +25,12 @@ class MeasureCategory(Enum):
     OTHERS = "Others"    
 
 class Type(Enum):
-    SENATE_PROJECT = 'SenateProject'
-    HOUSE_PROJECT = 'HouseProject'
+    SENATE_PROJECT = 'Proyecto del Senado'
+    HOUSE_PROJECT = 'Proyecto de la Cámara'
 
 class Body(Enum):
-    SENATE = 'Senate'
-    REPRESENTATIVE = 'HouseOfRepresentatives'
+    SENATE = 'S - Senado'
+    REPRESENTATIVE = 'C - Cámara de Representantes'
 
 class Party(Enum):
     PPD = 'PPD'
@@ -65,10 +65,10 @@ class DateFieldsMixins:
     updated_date: datetime = DateTime(default=datetime.now)
 
 class TermMixins:
-    status: str = String(max_length=9, choices=list(Term), default=Term._2021.value)
+    term: str = String(max_length=9, choices=list(Term), default=Term._2021.value)
 
 class StatusMixins:
-    status: str = String(max_length=10, choices=list(Status), default=Status.FILLED.value)
+    status: str = String(max_length=20, choices=list(Status), default=Status.FILLED.value)
     is_law: bool = Boolean(default=False)
     
 class LegislatorMixins:
@@ -90,14 +90,15 @@ class Representative(Model, LegislatorMixins, TermMixins):
 class Measure(Model, StatusMixins, DateFieldsMixins, TermMixins):
     ormar_config = base_ormar_config.copy(tablename="measures")
 
-    id: str = UUID(primary_key=True)
+    id: int = Integer(primary_key=True)
     number: str = String(max_length=7, nullable=False)
-    summary: str = String(max_length=256, nullable=False)
+    title: str = Text()
+    aisummary: str = Text(default="")
     authors: Json = JSON(default=list)
     type: str = String(max_length=20, choices=list(Type), default=Type.SENATE_PROJECT.value, nullable=False)
-    body: str = String(max_length=20, choices=list(Body), default=Body.SENATE.value, nullable=False)
-    status: str = String(max_length=20, unique=True, nullable=False)
+    # body: str = String(max_length=20, choices=list(Body), default=Body.SENATE.value, nullable=False)
     active: bool = Boolean(default=True, nullable=False)
-    category: str = String(max_length=20, choices=list(MeasureCategory))
+    category: str = String(max_length=20, choices=list(MeasureCategory), nullable=True)
+    filled_date: datetime = DateTime(nullable=False)
 
 engine = sqlalchemy.create_engine(settings.db_url)

@@ -7,4 +7,4 @@ uvicorn
 ormar[postgresql]
 eventkit
 pydantic-settings
-
+webdriver-manager
