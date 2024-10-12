@@ -18,9 +18,18 @@ def get_senators():
         full_name = href.find_element(By.CLASS_NAME, 'name').text
         position = href.find_element(By.CLASS_NAME, 'position').text
         party = href.find_element(By.CLASS_NAME, 'partido').text
+        
+        original_window = browser.current_window_handle
+        browser.execute_script(f"window.open('{link_bio}', '_blank');")
+        
+        # Get type of senator(por distrito vs por acumulacion)
+        type = browser.find_elements(By.CLASS_NAME, 'section_titles')[0].text        
+        browser.switch_to.window(original_window)        
+        
         senator_info = {
             'full_name': full_name,
             'position': position if position else None,
+            'type': type,
             'party' : party,
             'bio': link_bio,
             'pic': link_pic

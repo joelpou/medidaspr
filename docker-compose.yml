@@ -12,6 +12,9 @@ services:
     depends_on:
       - db
       - selenium
+      - ollama
+    networks:
+      - medidas-net
 
   db:
     image: postgres:15-alpine
@@ -21,11 +24,29 @@ services:
       - 5432:5432
     env_file:
       - db.env
+    networks:
+      - medidas-net
 
   selenium:
     image: selenium/standalone-chrome
     ports:
-      - "4444:4444"
+      - 4444:4444
+    networks:
+      - medidas-net
+
+  ollama:
+    image: ollama/ollama:latest
+    container_name: ollama
+    volumes:
+      - ~/.ollama:/root/.ollama  # Mounting the Ollama model directory
+    ports:
+      - 11435:11434
+    networks:
+      - medidas-net
 
 volumes:
   postgres_data:
+
+networks:
+  medidas-net:
+    driver: bridge

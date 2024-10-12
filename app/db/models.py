@@ -3,10 +3,10 @@ from enum import Enum
 import databases
 import sqlalchemy
 from ormar import Model, OrmarConfig, Integer, String, \
-    Text, DateTime, JSON, UUID, Boolean, ForeignKey
+    Text, DateTime, JSON, ManyToMany, Boolean, ForeignKey
 from .config import settings
 from pydantic import Json
-from typing import Optional
+from typing import List, Optional
 
 base_ormar_config = OrmarConfig(
     metadata = sqlalchemy.MetaData(),
@@ -14,38 +14,43 @@ base_ormar_config = OrmarConfig(
 )
 
 class MeasureCategory(Enum):
-    ECONOMIC = "Economic"
-    SECURITY_DEFENSE = "Security and Defense"
-    HEALTH_WELFARE = "Health and Welfare"
-    EDUCATION_CULTURE = "Education and Culture"
-    ENVIRONMENT_ENERGY = "Environment and Energy"
-    JUSTICE_HUMAN_RIGHTS = "Justice and Human Rights"
-    TECHNOLOGY_INNOVATION = "Technology and Innovation"
-    FOREIGN_RELATIONS = "Foreign Relations"
-    OTHERS = "Others"    
-
-class Type(Enum):
+    ECONOMIC = "Económico"
+    SECURITY_DEFENSE = "Seguridad y Defensa"
+    HEALTH_WELFARE = "Salud y Bienestar"
+    EDUCATION_CULTURE = "Educación y Cultura"
+    ENVIRONMENT_ENERGY = "Medio Ambiente y Energía"
+    JUSTICE_HUMAN_RIGHTS = "Justicia y Derechos Humanos"
+    TECHNOLOGY_INNOVATION = "Tecnología e Innovación"
+    FOREIGN_RELATIONS = "Relaciones Exteriores"
+    OTHERS = "Otros"
+    
+class MeasureType(Enum):
     SENATE_PROJECT = 'Proyecto del Senado'
     HOUSE_PROJECT = 'Proyecto de la Cámara'
 
 class Body(Enum):
-    SENATE = 'S - Senado'
-    REPRESENTATIVE = 'C - Cámara de Representantes'
+    SENATE = 'Senado'
+    REPRESENTATIVE = 'Cámara de Representantes'
 
 class Party(Enum):
-    PPD = 'PPD'
-    PNP = 'PNP'
-    PIP = 'PIP'
-    VC = 'VC'
-    PD = 'PD'
-    IND = 'IND'
+    PPD = 'Partido Popular Democrático'
+    PNP = 'Partido Nuevo Progresista'
+    PIP = 'Partido Independentista Puertorriqueño'
+    MVC = 'Movimiento Victoria Ciudadana'
+    PD = 'Proyecto Dignidad'
+    IND = 'Independiente'
+    
+class Position(Enum):
+    PRESIDENT = 'President'
+    VICEPRESIDENT = 'Vicepresident'
+    SPOKEPERSON = 'Spokeperson' # Portavoz
 
 class Status(Enum):
-    FILLED = 'Filled'
-    SENATE_APPROVED = 'SenateApproved'
-    HOUSE_APPROVED = 'HouseApproved'
-    SENT_GOVERNOR = 'SentGovernor'
-    GOVERNOR_APPROVED = 'GovernorApproved'
+    FILLED = 'Radicado'
+    SENATE_APPROVED = 'Aprobado Por Senado'
+    HOUSE_APPROVED = 'Aprobado Por Camara'
+    SENT_GOVERNOR = 'Enviado Al Gobernador'
+    GOVERNOR_APPROVED = 'Aprobado Por Gobernador'
 
 class Term(Enum):
     _1985 = '1985-1988'
@@ -74,12 +79,16 @@ class StatusMixins:
 class LegislatorMixins:
     id: int = Integer(primary_key=True)
     first_name: str = String(max_length=20, nullable=False)
-    middle_name: str = String(max_length=20)
+    middle_name: str = String(max_length=20, default=None)
     last_first_name: str = String(max_length=20, nullable=False)
     last_second_name: str = String(max_length=20)
-    party: str = String(max_length=20, choices=list(Party), default=Party.IND.value)
-    body: str = String(max_length=20, choices=list(Body), default=Body.SENATE.value, nullable=False)
-    active: bool = Boolean(default=True, nullable=False)    
+    party: str = String(max_length=40, choices=list(Party), nullable=False)
+    body: str = String(max_length=21, choices=list(Body), default=Body.SENATE.value, nullable=False)
+    position: str = String(max_length=50, default=None, nullable=False)
+    district: str = String(max_length=30, nullable=False)
+    bio: str = String(max_length=100, nullable=False)
+    pic: str = String(max_length=150, nullable=False)
+    active: bool = Boolean(default=True, nullable=False)
 
 class Senator(Model, LegislatorMixins, TermMixins):
     ormar_config = base_ormar_config.copy(tablename="senators")
@@ -87,17 +96,20 @@ class Senator(Model, LegislatorMixins, TermMixins):
 class Representative(Model, LegislatorMixins, TermMixins):
     ormar_config = base_ormar_config.copy(tablename="representatives")
 
-class Measure(Model, StatusMixins, DateFieldsMixins, TermMixins):
+class Measure(Model, StatusMixins, TermMixins):
     ormar_config = base_ormar_config.copy(tablename="measures")
 
     id: int = Integer(primary_key=True)
     number: str = String(max_length=7, nullable=False)
-    title: str = Text()
-    aisummary: str = Text(default="")
-    authors: Json = JSON(default=list)
-    type: str = String(max_length=20, choices=list(Type), default=Type.SENATE_PROJECT.value, nullable=False)
-    # body: str = String(max_length=20, choices=list(Body), default=Body.SENATE.value, nullable=False)
-    active: bool = Boolean(default=True, nullable=False)
+    aisummary: str = Text()
+    authors: List[Senator] = ManyToMany(Senator)
+    type: str = String(
+        max_length=20, 
+        choices=list(MeasureType), 
+        default=MeasureType.SENATE_PROJECT.value, 
+        nullable=False
+    )
+    url: str = String(max_length=70, nullable=False)
     category: str = String(max_length=20, choices=list(MeasureCategory), nullable=True)
     filled_date: datetime = DateTime(nullable=False)
 

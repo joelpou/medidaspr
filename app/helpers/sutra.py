@@ -56,22 +56,22 @@ class MeasureSearch(Scraper):
         return super()._wait(call)
         
     def submit_form(self):
-        self.wait(super()._submit_form('ctl00_CPHBody_Tramites_btnFilter'))
+        super()._submit_form('ctl00_CPHBody_Tramites_btnFilter')
         
     def select_term(self, option):
-        self.wait(super().select_input('ctl00_CPHBody_Tramites_lovCuatrienio', option))
+        super().select_input('ctl00_CPHBody_Tramites_lovCuatrienio', option)
         
     def select_type(self, option):
-        self.wait(super().select_input('ctl00_CPHBody_Tramites_lovTipoMedida', option))
+        super().select_input('ctl00_CPHBody_Tramites_lovTipoMedida', option)
         
     def select_body(self, option):
-        self.wait(super().select_input('ctl00_CPHBody_Tramites_lovCuerpoId', option))
+        super().select_input('ctl00_CPHBody_Tramites_lovCuerpoId', option)
         
     def switch_to_view_all_measures(self):
-        self.wait(super().select_input('ctl00_CPHBody_Tramites_ddlPageSize', 'Todos'))
+        super().select_input('ctl00_CPHBody_Tramites_ddlPageSize', 'Todos')
         
     def input_measure_number(self, measure_number):
-        self.wait(super().input_text('ctl00_CPHBody_Tramites_txt_Medida', measure_number))
+        super().input_text('ctl00_CPHBody_Tramites_txt_Medida', measure_number)
         
     def get_measure_filled_date(self):
         return super().find_by_id('ctl00_CPHBody_txt_FechaRadicada').text
@@ -80,13 +80,14 @@ class MeasureSearch(Scraper):
         return super().find_by_id('ctl00_CPHBody_txtTitulo').text
     
     def get_measure_authors(self):        
-        self.wait(super().select_tab('ctl00_CPHBody_AnejoTabsn1'))
+        super().select_tab('ctl00_CPHBody_AnejoTabsn1')
         
         authors = []
         author_table = super().find_by_id('ctl00_CPHBody_TabAutores_dgResults')
         authors_class = super().finds_by_driver_and_class(author_table, 'DetailFormLbl')
         for author in authors_class:
-            authors.append(author.text)
+            author_unicode = author.text.encode('utf-8').decode('unicode_escape')
+            authors.append(author_unicode)
             
         return authors 
         
@@ -107,7 +108,7 @@ class MeasureSearch(Scraper):
             for row in measures:
                 # Get status tracker button
                 status = self.get_measure_status(row)        
-                if status != MeasureStatus.RADICADO.name:
+                if status != MeasureStatus.FILLED.name:
                     measure_number = self.get_measure_number(row.text)
                     logging.info(f'Reading measure: {measure_number}')
                     if measure_number not in voted_measure_numbers:
@@ -126,13 +127,7 @@ class MeasureSearch(Scraper):
         
     def get_measure_status(self, measure):
         status = None
-        
-        # WebDriverWait(measure, 10).until(
-        #     EC.visibility_of_element_located((By.XPATH, ".//td//div//img[contains(@class, 'tracker-bg')]"))
-        # )
-        # img_element = measure.find_element(By.XPATH, ".//td//div//img[contains(@class, 'tracker-bg')]")
         img_element = super().find_by_driver_and_xpath(measure, ".//td//div//img[contains(@class, 'tracker-bg')]")
-        # self.browser.execute_script("arguments[0].scrollIntoView(true);", img_element)
         status_url = img_element.get_attribute('src')
             
         # Store measure number as long as it is not in filed state
