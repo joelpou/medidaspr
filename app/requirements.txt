@@ -2,6 +2,7 @@ fastapi
 selenium
 pytesseract
 pdf2image
+asyncpg
 psycopg2-binary
 uvicorn
 ormar[postgresql]

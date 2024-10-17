@@ -26,6 +26,7 @@ services:
       - db.env
     networks:
       - medidas-net
+    # command: ["sh", "-c", "sysctl -w net.ipv4.tcp_keepalive_time=600 && sysctl -w net.ipv4.tcp_keepalive_intvl=30 && sysctl -w net.ipv4.tcp_keepalive_probes=10 && docker-entrypoint.sh postgres"]
 
   selenium:
     image: selenium/standalone-chrome
@@ -37,6 +38,13 @@ services:
   ollama:
     image: ollama/ollama:latest
     container_name: ollama
+    deploy:
+      resources:
+        reservations:
+          devices:
+            - driver: nvidia
+              count: all
+              capabilities: [gpu]
     volumes:
       - ~/.ollama:/root/.ollama  # Mounting the Ollama model directory
     ports:

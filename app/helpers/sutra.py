@@ -1,5 +1,6 @@
 import time, re, logging
 from enum import Enum
+from urllib.parse import unquote
 from .scraper import Scraper
 from selenium import webdriver
 
@@ -86,8 +87,8 @@ class MeasureSearch(Scraper):
         author_table = super().find_by_id('ctl00_CPHBody_TabAutores_dgResults')
         authors_class = super().finds_by_driver_and_class(author_table, 'DetailFormLbl')
         for author in authors_class:
-            author_unicode = author.text.encode('utf-8').decode('unicode_escape')
-            authors.append(author_unicode)
+            # author_unicode = author.text.encode('utf-8').decode('unicode_escape')
+            authors.append(unquote(author.text))
             
         return authors 
         

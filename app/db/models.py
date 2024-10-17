@@ -14,14 +14,23 @@ base_ormar_config = OrmarConfig(
 )
 
 class MeasureCategory(Enum):
-    ECONOMIC = "Económico"
+    ECONOMIC = "Economía"
     SECURITY_DEFENSE = "Seguridad y Defensa"
     HEALTH_WELFARE = "Salud y Bienestar"
     EDUCATION_CULTURE = "Educación y Cultura"
     ENVIRONMENT_ENERGY = "Medio Ambiente y Energía"
     JUSTICE_HUMAN_RIGHTS = "Justicia y Derechos Humanos"
     TECHNOLOGY_INNOVATION = "Tecnología e Innovación"
-    FOREIGN_RELATIONS = "Relaciones Exteriores"
+    INFRASTRUCTURE_TRANSPORT = "Infraestructura y Transporte"
+    COMMUNITY_DEVELOPMENT_HOUSING = "Desarrollo Comunitario y Vivienda"
+    AGRICULTURE_RURAL_DEVELOPMENT = "Agricultura y Desarrollo Rural"
+    PUBLIC_FINANCE_GOVERNANCE = "Finanzas Públicas y Gobernanza"
+    TOURISM_RECREATION = "Turismo y Recreación"
+    CIVIL_RIGHTS_CITIZEN_PARTICIPATION = "Derechos Civiles y Participación Ciudadana"
+    DISASTERS_EMERGENCY_MANAGEMENT = "Desastres y Gestión de Emergencias"
+    POLITICAL_AUTONOMY_STATUS = "Autonomía Política y Estatus Político"
+    INDUSTRY_COMMERCE = "Industria y Comercio"
+    LABOR_LABOR_RELATIONS = "Trabajo y Relaciones Laborales"
     OTHERS = "Otros"
     
 class MeasureType(Enum):
@@ -43,7 +52,12 @@ class Party(Enum):
 class Position(Enum):
     PRESIDENT = 'President'
     VICEPRESIDENT = 'Vicepresident'
-    SPOKEPERSON = 'Spokeperson' # Portavoz
+    SPOKEPERSON = 'Portavoz'
+    ALTSPOKEPERSON = 'Portavoz Alterno'
+    
+class DistrictType(Enum):
+    DISTRICT = 'Distrito'
+    ACCUMULATION = 'Acumulación'
 
 class Status(Enum):
     FILLED = 'Radicado'
@@ -76,25 +90,21 @@ class StatusMixins:
     status: str = String(max_length=20, choices=list(Status), default=Status.FILLED.value)
     is_law: bool = Boolean(default=False)
     
-class LegislatorMixins:
+class Legislator(Model, TermMixins):
+    ormar_config = base_ormar_config.copy(tablename="legislators")
+    
     id: int = Integer(primary_key=True)
     first_name: str = String(max_length=20, nullable=False)
-    middle_name: str = String(max_length=20, default=None)
+    middle_name: str = String(max_length=20, default="")
     last_first_name: str = String(max_length=20, nullable=False)
     last_second_name: str = String(max_length=20)
     party: str = String(max_length=40, choices=list(Party), nullable=False)
-    body: str = String(max_length=21, choices=list(Body), default=Body.SENATE.value, nullable=False)
-    position: str = String(max_length=50, default=None, nullable=False)
-    district: str = String(max_length=30, nullable=False)
+    body: str = String(max_length=21, choices=list(Body), nullable=False)
+    position: str = String(max_length=50, default="", choices=list(Position), nullable=False)
+    district: str = String(max_length=30, choices=list(DistrictType), nullable=False)
     bio: str = String(max_length=100, nullable=False)
     pic: str = String(max_length=150, nullable=False)
     active: bool = Boolean(default=True, nullable=False)
-
-class Senator(Model, LegislatorMixins, TermMixins):
-    ormar_config = base_ormar_config.copy(tablename="senators")
-        
-class Representative(Model, LegislatorMixins, TermMixins):
-    ormar_config = base_ormar_config.copy(tablename="representatives")
 
 class Measure(Model, StatusMixins, TermMixins):
     ormar_config = base_ormar_config.copy(tablename="measures")
@@ -102,15 +112,17 @@ class Measure(Model, StatusMixins, TermMixins):
     id: int = Integer(primary_key=True)
     number: str = String(max_length=7, nullable=False)
     aisummary: str = Text()
-    authors: List[Senator] = ManyToMany(Senator)
+    authors: Optional[List[Legislator]] = ManyToMany(Legislator, 
+                                                  related_name="measure_authors", 
+                                                  skip_reverse=True)
     type: str = String(
-        max_length=20, 
+        max_length=21, 
         choices=list(MeasureType), 
         default=MeasureType.SENATE_PROJECT.value, 
         nullable=False
     )
     url: str = String(max_length=70, nullable=False)
-    category: str = String(max_length=20, choices=list(MeasureCategory), nullable=True)
+    category: str = String(max_length=50, choices=list(MeasureCategory), nullable=True)
     filled_date: datetime = DateTime(nullable=False)
 
 engine = sqlalchemy.create_engine(settings.db_url)
